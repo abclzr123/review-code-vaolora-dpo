@@ -1,0 +1,99 @@
+run:
+  phase: value
+  run_name: value_alignment_dpo_example
+  seed: 42
+  method_tag: value_alignment
+  algo_tag: dpo
+
+model:
+  model_name_or_path: /path/to/base-model
+  torch_dtype: bf16
+  trust_remote_code: false
+  attn_implementation: flash_attention_2
+
+tokenizer:
+  tokenizer_name_or_path: /path/to/base-model
+
+data:
+  dataset_repo: trl-lib/ultrafeedback_binarized
+  dataset_path: /path/to/local-dataset
+  train_split: train
+  eval_split: test
+  train_limit: null
+  eval_limit: 512
+
+trainer:
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 1.0e-05
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  num_train_epochs: 1
+  max_steps: -1
+  logging_steps: 10
+  save_steps: 100
+  eval_steps: 100
+  eval_strategy: steps
+  save_strategy: steps
+  logging_strategy: steps
+  gradient_checkpointing: false
+  bf16: true
+  fp16: false
+  max_prompt_length: 1024
+  max_completion_length: 512
+  beta: 0.1
+  loss_type: sigmoid
+  load_best_model_at_end: true
+  safe_skip_best_model_reload: true
+  metric_for_best_model: eval_loss
+  greater_is_better: false
+  save_total_limit: 2
+  dataset_num_proc: 1
+
+peft:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+  - q_proj
+  - v_proj
+  - o_proj
+  bias: none
+  task_type: CAUSAL_LM
+
+method:
+  enable_orth: false
+  enable_value_alignment: true
+  lambda_orth: 0.0
+  lambda_val: 0.02
+  orth_strategy: soft_lora_factor
+  value_direction_mode: per_pair_reference
+  value_target_layer: 36
+  value_pooling: completion_mean
+  value_loss_type: chosen_pair_softplus
+  value_loss_temperature: 0.1
+  value_pos_margin: 0.1
+  value_pair_margin: 0.05
+  value_pair_loss_alpha: 0.85
+  value_pair_similarity_max: 0.95
+  value_diff_norm_min: 0.0
+  value_gate_strategy: tight_margin
+  value_tight_pos_margin: 0.12
+  value_tight_pair_margin: 0.07
+  value_warmup_ratio: 0.3
+  value_anchor_path: /path/to/value-anchor.pt
+
+logging:
+  report_to: []
+
+checkpointing:
+  save_peft_only: true
+
+evaluation:
+  primary_metric: eval_loss
+
+paths:
+  log_dir_template: /path/to/logs/{run_name}
+  checkpoint_dir_template: /path/to/checkpoints/{run_name}
+  eval_dir_template: /path/to/eval/{run_name}
